@@ -429,21 +429,49 @@ export default {
       );
     },
 
-    sendOrder() {
+        async sendOrder() {
       if (!this.cart.length) return;
 
       const order = {
-        table: 1,
-        items: this.cart,
-        total: this.totalPrice(),
+        table_name: "A1",              // TEMP hardcoded
+        customer_name: "Walk-in",      // TEMP
+        phone: "0000000000",           // TEMP
+        guest_count: 1,                // TEMP
+        items: this.cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          qty: item.qty,
+          price: item.price,
+          note: item.note || null,
+        })),
       };
 
-      console.log("ORDER SENT:", order);
-      alert("Order sent!");
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(order),
+        });
 
-      this.cart = [];
-      localStorage.removeItem("cart");
-      this.showCart = false;
+        if (!res.ok) {
+          throw new Error("Failed to send order");
+        }
+
+        const data = await res.json();
+        console.log("ORDER SAVED:", data);
+
+        alert("Đặt hàng thành công!");
+
+        // clear cart
+        this.cart = [];
+        localStorage.removeItem("cart");
+        this.showCart = false;
+      } catch (err) {
+        console.error(err);
+        alert("Không thể gửi đơn hàng");
+      }
     },
   },
 };
